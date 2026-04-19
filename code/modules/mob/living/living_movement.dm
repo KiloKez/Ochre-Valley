@@ -20,6 +20,15 @@
 		return ..()
 	if((mover.pass_flags & PASSMOB))
 		return TRUE
+	//OVEdit Start: More complex passthrough behavior.
+	if((mover.pass_flags & SIZEPASS))
+		if(ismob(mover) && isliving(mover))
+			var/mob/living/M = mover
+			if(istype(M.current_size, /datum/sizecat/micro) || !cmode)
+				return TRUE
+			return FALSE
+		return TRUE
+	//OVEdit End
 	if(istype(mover, /obj/projectile))
 		var/obj/projectile/P = mover
 		return !P.can_hit_target(src, P.permutated, src == P.original, TRUE)

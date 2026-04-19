@@ -82,6 +82,7 @@ GLOBAL_LIST_INIT(bitflags, list(1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 204
 #define PASSCLOSEDTURF	(1<<5)
 /// Let thrown things past us. **ONLY MEANINGFUL ON pass_flags_self!**
 #define LETPASSTHROW	(1<<6)
+#define SIZEPASS 		(1<<7) //OVEdit: More selective flag for size-related mob passing
 
 //Movement Types
 #define GROUND			(1<<0)
