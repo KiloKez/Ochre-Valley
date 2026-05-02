@@ -906,6 +906,10 @@ GLOBAL_VAR_INIT(mobids, 1)
 
 ///Checks mobility move as well as parent checks
 /mob/living/canface(atom/A)
+	// OV Edit Start
+	if(IsPetrified())
+		return FALSE
+	// OV Edit End
 	if(!(mobility_flags & MOBILITY_MOVE))
 		return FALSE
 	if(world.time < last_dir_change + 5)

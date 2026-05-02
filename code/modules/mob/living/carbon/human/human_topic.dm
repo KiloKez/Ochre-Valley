@@ -131,6 +131,22 @@ GLOBAL_VAR_INIT(year_integer, text2num(year)) // = 2013???
 			SEND_SIGNAL(underwear, COMSIG_ITEM_UNDERWEAR_REMOVE, src) //OV ADD
 			underwear = null
 
+	// OV Edit Start
+	if(href_list["petrified_posture"] && usr.canUseTopic(src, BE_CLOSE, NO_DEXTERITY))
+		if(!IsPetrified())
+			return
+		if(!isliving(usr))
+			return
+		var/mob/living/living_user = usr
+		var/obj/item/grabbing/posture_grab = living_user.get_grabbed_petrified_posture_grab()
+		if(!posture_grab || posture_grab.grabbed != src)
+			to_chat(usr, span_warning("I need to keep hold of [src]."))
+			return
+		living_user.set_grabbed_petrified_posture(posture_grab, href_list["petrified_posture"] == "stand")
+		show_inv(living_user)
+		return
+	// OV Edit End
+
 	if(href_list["legwearsthing"]) //canUseTopic check for this is handled by mob/Topic()
 		if(!get_location_accessible(src, BODY_ZONE_PRECISE_GROIN, skipundies = TRUE))
 			to_chat(usr, span_warning("I can't reach that! Something is covering it."))

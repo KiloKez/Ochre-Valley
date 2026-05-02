@@ -748,10 +748,16 @@
 		death()
 
 /mob/living/incapacitated(ignore_restraints = FALSE, ignore_grab = TRUE, check_immobilized = FALSE, ignore_stasis = FALSE)
-	if(stat || IsUnconscious() || IsStun() || IsParalyzed() || (!ignore_restraints && restrained(ignore_grab)))
+	// OV Edit Start
+	if(stat || IsUnconscious() || IsStun() || IsParalyzed() || IsPetrified() || (!ignore_restraints && restrained(ignore_grab)))
+	// OV Edit End
 		return TRUE
 
 /mob/living/canUseStorage()
+	// OV Edit Start
+	if(IsPetrified())
+		return FALSE
+	// OV Edit End
 	if (get_num_arms() <= 0)
 		return FALSE
 	return TRUE
@@ -798,6 +804,11 @@
 	set hidden = 1
 	if(stat)
 		return
+	// OV Edit Start
+	if(IsPetrified())
+		to_chat(src, span_warning("I can't move."))
+		return
+	// OV Edit End
 	if(pulledby)
 		to_chat(src, span_warning("I'm grabbed!"))
 		return
@@ -810,6 +821,11 @@
 	set hidden = 1
 	if(stat)
 		return
+	// OV Edit Start
+	if(IsPetrified())
+		to_chat(src, span_warning("I can't move."))
+		return
+	// OV Edit End
 	if(pulledby)
 		to_chat(src, span_warning("I'm grabbed!"))
 		return
@@ -829,6 +845,11 @@
 	set hidden = 1
 	if(stat)
 		return
+	// OV Edit Start
+	if(IsPetrified())
+		to_chat(src, span_warning("I can't move."))
+		return
+	// OV Edit End
 	if(pulledby)
 		to_chat(src, span_warning("I'm grabbed!"))
 		return
@@ -1857,8 +1878,20 @@
 	var/paralyzed = IsParalyzed()
 	var/stun = IsStun()
 	var/knockdown = IsKnockdown()
+	// OV Edit Start
+	var/petrified = IsPetrified()
+	if(petrified && m_intent != MOVE_INTENT_WALK)
+		m_intent = MOVE_INTENT_WALK
+		if(hud_used?.static_inventory)
+			for(var/atom/movable/screen/mov_intent/move_selector in hud_used.static_inventory)
+				move_selector.update_icon()
+			for(var/atom/movable/screen/rogmove/rogmove_selector in hud_used.static_inventory)
+				rogmove_selector.update_icon()
+	// OV Edit End
 	var/ignore_legs = get_leg_ignore()
-	var/canmove = !IsImmobilized() && !stun && conscious && !paralyzed && !buckled && (!stat_softcrit || !pulledby) && !chokehold && !IsFrozen() && (has_arms || ignore_legs || has_legs)
+	// OV Edit Start
+	var/canmove = !petrified && !IsImmobilized() && !stun && conscious && !paralyzed && !buckled && (!stat_softcrit || !pulledby) && !chokehold && !IsFrozen() && (has_arms || ignore_legs || has_legs)
+	// OV Edit End
 	if(canmove)
 		mobility_flags |= MOBILITY_MOVE
 	else
@@ -1905,17 +1938,23 @@
 	else
 		mobility_flags |= MOBILITY_UI|MOBILITY_PULL
 */
-	if(restrained || incapacitated())
+	// OV Edit Start
+	if(restrained || incapacitated() || petrified)
+	// OV Edit End
 		mobility_flags &= ~MOBILITY_UI
 	else
 		mobility_flags |= MOBILITY_UI
 
-	if(incapacitated())
+	// OV Edit Start
+	if(incapacitated() || petrified)
+	// OV Edit End
 		mobility_flags &= ~MOBILITY_PULL
 	else
 		mobility_flags |= MOBILITY_PULL
 
-	var/canitem = !paralyzed && !stun && conscious && !chokehold && !restrained && has_arms && !surrendering
+	// OV Edit Start
+	var/canitem = !petrified && !paralyzed && !stun && conscious && !chokehold && !restrained && has_arms && !surrendering
+	// OV Edit End
 	if(canitem)
 		mobility_flags |= (MOBILITY_USE | MOBILITY_PICKUP | MOBILITY_STORAGE)
 	else

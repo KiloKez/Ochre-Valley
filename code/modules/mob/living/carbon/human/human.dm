@@ -189,6 +189,16 @@
 	if(legcuffed)
 		dat += "<tr><td><A href='?src=[REF(src)];item=[SLOT_LEGCUFFED]'>Remove [legcuffed]</A></td></tr>"
 
+	// OV Edit Start
+	if(IsPetrified() && isliving(user))
+		var/mob/living/living_user = user
+		var/obj/item/grabbing/posture_grab = living_user.get_grabbed_petrified_posture_grab()
+		if(posture_grab?.grabbed == src)
+			var/posture_action = (mobility_flags & MOBILITY_STAND) ? "Lay Down" : "Stand Up"
+			var/posture_target = (mobility_flags & MOBILITY_STAND) ? "lay" : "stand"
+			dat += "<tr><td><A href='?src=[REF(src)];petrified_posture=[posture_target]'>[posture_action]</A></td></tr>"
+	// OV Edit End
+
 	dat += "<tr><td><hr></td></tr>"
 
 	for(var/i in 1 to held_items.len)
@@ -464,6 +474,15 @@
 			R.fields["name"] = newname
 
 /mob/living/carbon/human/get_total_tint()
+	// OV Edit Start
+	var/obj/item/bodypart/head/petrified_view_head = get_petrified_view_head()
+	if(petrified_view_head)
+		if(petrified_view_head.eyes)
+			. = petrified_view_head.eyes.tint
+		else
+			. = INFINITY
+		return
+	// OV Edit End
 	if(isdullahan(src))
 		var/datum/species/dullahan/species = dna.species
 		var/obj/item/bodypart/head/dullahan/user_head = species.my_head

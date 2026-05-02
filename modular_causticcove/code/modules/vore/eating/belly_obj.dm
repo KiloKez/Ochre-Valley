@@ -928,6 +928,10 @@
 
 	//Incase they have the loop going, let's double check to stop it.
 	M.stop_sound_channel(CHANNEL_PREYLOOP)
+	// OV Edit Start
+	if(M.has_status_effect(STATUS_EFFECT_PETRIFIED))
+		M.petrification_statue_death("digested", owner)
+	// OV Edit End
 	M.set_light(0)
 	// Delete the digested mob
 	// Changed qdel to a forceMove to allow reforming, and... handled robots special.

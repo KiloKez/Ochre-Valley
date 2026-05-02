@@ -96,8 +96,16 @@
 		return FALSE
 	if(!is_organic_limb())
 		return FALSE
+	// OV Edit Start
+	if(owner?.IsPetrified())
+		return FALSE
+	// OV Edit End
 	if(NOBLOOD in owner?.dna?.species?.species_traits)
 		return FALSE
+	// OV Edit Start
+	if(INVISBLOOD in owner?.dna?.species?.species_traits)
+		return FALSE
+	// OV Edit End
 	return TRUE
 
 /// Returns the total bleed rate on this bodypart

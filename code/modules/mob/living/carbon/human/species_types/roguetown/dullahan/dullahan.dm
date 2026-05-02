@@ -362,7 +362,12 @@
 /datum/species/dullahan/proc/on_head_destroyed()
 	var/mob/living/carbon/user = my_head.original_owner
 	if(!(user.status_flags & GODMODE))
-		user.death()
+		// OV Edit Start
+		if(user.has_status_effect(STATUS_EFFECT_PETRIFIED) && user.stat != DEAD)
+			user.petrification_statue_death("smashed apart")
+		else
+			user.death()
+		// OV Edit End
 
 	UnregisterSignal(my_head, COMSIG_QDELETING)
 	my_head = null

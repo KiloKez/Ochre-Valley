@@ -149,6 +149,13 @@ GLOBAL_LIST_INIT(department_radio_keys, list(
 	if(check_emote(original_message, forced) || !can_speak_basic(original_message, ignore_spam, forced))
 		return
 
+	// OV Edit Start
+	if(has_status_effect(STATUS_EFFECT_PETRIFIED) && !forced)
+		message = "......"
+		original_message = message
+		args[SPEECH_MESSAGE] = message
+	// OV Edit End
+
 	if(check_whisper(original_message, forced) || !can_speak_basic(original_message, ignore_spam, forced))
 		return
 	//OV edit end

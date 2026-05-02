@@ -1,5 +1,12 @@
 //The code execution of the emote datum is located at code/datums/emotes.dm
 /mob/proc/emote(act, m_type = null, message = null, intentional = FALSE, forced = FALSE, targetted = FALSE, custom_me = FALSE, animal = FALSE)
+	// OV Edit Start
+	if(intentional && !custom_me && isliving(src))
+		var/mob/living/living_user = src
+		if(living_user.IsPetrified())
+			to_chat(src, span_warning("I can't do that while petrified."))
+			return
+	// OV Edit End
 	var/oldact = act
 	act = lowertext(act)
 	var/param = message

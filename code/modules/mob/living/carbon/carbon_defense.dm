@@ -215,7 +215,9 @@
 		next_attack_msg.Cut()
 		affecting.bodypart_attacked_by(user.used_intent.blade_class, statforce, crit_message = TRUE, weapon = I)
 		apply_damage(statforce, I.damtype, affecting)
-		if(I.damtype == BRUTE && affecting.status == BODYPART_ORGANIC)
+		// OV Edit Start
+		if(I.damtype == BRUTE && affecting.status == BODYPART_ORGANIC && !IsPetrified())
+		// OV Edit End
 			if(prob(statforce))
 				I.add_mob_blood(src)
 				user.update_inv_hands()

@@ -11,6 +11,9 @@ GLOBAL_LIST_INIT(roleplay_readme, world.file2list("strings/rt/rp_prompt.txt"))
 	var/ready = 0
 	var/spawning = 0//Referenced when you want to delete the new_player later on in the code.
 	var/topjob = "Hero!"
+	// OV Edit Start
+	var/skip_surrendered_petrified_auto_rejoin = FALSE
+	// OV Edit End
 	flags_1 = NONE
 
 	invisibility = INVISIBILITY_ABSTRACT
@@ -68,6 +71,10 @@ GLOBAL_LIST_INIT(roleplay_readme, world.file2list("strings/rt/rp_prompt.txt"))
 	return
 
 /mob/dead/new_player/proc/new_player_panel()
+	// OV Edit Start
+	if(SSticker?.IsRoundInProgress() && try_rejoin_surrendered_petrified_body(TRUE))
+		return
+	// OV Edit End
 	if(client)
 		if(client.prefs)
 			client.prefs.ShowChoices(src, 4)
@@ -131,6 +138,11 @@ GLOBAL_LIST_INIT(roleplay_readme, world.file2list("strings/rt/rp_prompt.txt"))
 		if(!SSticker?.IsRoundInProgress())
 			to_chat(usr, span_boldwarning("The game is starting. You cannot join yet."))
 			return
+
+		// OV Edit Start
+		if(try_rejoin_surrendered_petrified_body())
+			return
+		// OV Edit End
 
 		if(client && client.prefs.is_active_migrant())
 			to_chat(usr, span_boldwarning("You are in the migrant queue."))
@@ -375,6 +387,11 @@ GLOBAL_LIST_INIT(roleplay_readme, world.file2list("strings/rt/rp_prompt.txt"))
 	return JOB_AVAILABLE
 
 /mob/dead/new_player/proc/AttemptLateSpawn(rank)
+	// OV Edit Start
+	if(try_rejoin_surrendered_petrified_body())
+		return TRUE
+	// OV Edit End
+
 	var/error = IsJobUnavailable(rank, TRUE)
 	if(error != JOB_AVAILABLE)
 		to_chat(src, span_warning("[get_job_unavailable_error_message(error, rank)]"))

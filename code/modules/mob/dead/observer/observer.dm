@@ -532,6 +532,9 @@ This is the proc mobs get to turn into a ghost. Forked from ghostize due to comp
 		return
 
 	client.verbs -= GLOB.ghost_verbs
+	// OV Edit Start
+	M.skip_surrendered_petrified_auto_rejoin = TRUE
+	// OV Edit End
 	M.key = key
 	return
 

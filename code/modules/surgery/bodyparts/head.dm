@@ -202,6 +202,17 @@
 	cut_overlays()
 	. = ..()
 	if(dropped) //certain overlays only appear when the limb is being detached from its owner.
+		// OV Edit Start
+		var/mob/living/bodypart_owner = owner || original_owner
+		var/statue_color = petrification_render_color
+		if(!statue_color && bodypart_owner?.IsPetrified())
+			petrification_debug("head_get_limb_icon renderer-fallback bypassed: [petrification_debug_bodypart_summary(src)] owner=[petrification_debug_value(bodypart_owner)] requested_color=[bodypart_owner.get_petrification_render_color(TRUE)]")
+		var/list/petrified_color_matrix
+		if(statue_color)
+			petrified_color_matrix = petrification_material_color_matrix(statue_color)
+		if(statue_color || bodypart_owner?.IsPetrified())
+			petrification_debug("head_get_limb_icon dropped start: [petrification_debug_bodypart_summary(src)] owner=[petrification_debug_value(bodypart_owner)] owner_petrified=[bodypart_owner?.IsPetrified()] statue_color=[petrification_debug_value(statue_color)] inherited_overlays=[petrification_debug_len(.)]")
+		// OV Edit End
 
 		if(status != BODYPART_ROBOTIC) //having a robotic head hides certain features.
 			//Applies the debrained overlay if there is no brain
@@ -227,6 +238,11 @@
 
 			if(eyes.eye_color)
 				eyes_overlay.color = "#" + eyes.eye_color
+		// OV Edit Start
+		if(petrified_color_matrix)
+			apply_petrified_overlay_color(., null, petrified_color_matrix)
+			petrification_debug("head_get_limb_icon dropped tint-applied: zone=[body_zone] overlays=[petrification_debug_len(.)] matrix_len=[petrification_debug_len(petrified_color_matrix)]")
+		// OV Edit End
 
 /obj/item/bodypart/head/MiddleClick(mob/living/user, params)
 	to_chat(user, span_notice("You contemplate carving what little scraps of meat you can from \the [src], but then think better of it. Probably worth something to someone, somewhere..."))

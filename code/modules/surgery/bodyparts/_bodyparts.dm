@@ -47,6 +47,9 @@
 	var/should_draw_greyscale = FALSE
 	var/species_color = ""
 	var/mutation_color = ""
+	// OV Edit Start
+	var/petrification_render_color
+	// OV Edit End
 	var/no_update = 0
 	var/species_icon = ""
 
@@ -176,6 +179,12 @@
 	return list(/datum/intent/grab/move, /datum/intent/grab/shove)
 
 /obj/item/bodypart/Destroy()
+	// OV Edit Start
+	if(istype(src, /obj/item/bodypart/head))
+		var/mob/living/original_living = original_owner
+		if(original_living?.has_status_effect(STATUS_EFFECT_PETRIFIED) && original_living.stat != DEAD)
+			original_living.petrification_statue_death("smashed apart")
+	// OV Edit End
 	if(owner)
 		owner.bodyparts -= src
 		owner = null
@@ -235,7 +244,11 @@
 				if(rotted)
 					for(var/obj/item/reagent_containers/food/snacks/rogue/meat/steak/putrid in produced_steaks)
 						putrid.become_rotten()
-				new /obj/effect/decal/cleanable/blood/splatter(get_turf(src))
+				// OV Edit Start
+				var/mob/living/blood_source = owner || original_owner
+				if(!blood_source?.IsPetrified())
+					new /obj/effect/decal/cleanable/blood/splatter(get_turf(src))
+				// OV Edit End
 				user.mind.add_sleep_experience(/datum/skill/labor/butchering, amt2raise, FALSE)
 				qdel(src)
 	..()
@@ -257,6 +270,17 @@
 	return ..()
 
 /obj/item/bodypart/head/attackby(obj/item/I, mob/user, params)
+	// OV Edit Start
+	var/mob/living/original_living = original_owner
+	if(!owner && original_living?.has_status_effect(STATUS_EFFECT_PETRIFIED) && original_living.stat != DEAD && I.force && !I.get_sharpness())
+		user.visible_message(span_danger("[user] begins smashing [src] apart with [I]."), span_warning("I begin smashing [src] apart with [I]."))
+		if(do_after(user, 3 SECONDS, target = src))
+			if(!QDELETED(src) && !owner && original_living.has_status_effect(STATUS_EFFECT_PETRIFIED) && original_living.stat != DEAD)
+				original_living.petrification_statue_death("smashed apart", user)
+				user.visible_message(span_danger("[user] smashes [src] apart!"), span_warning("I smash [src] apart."))
+				qdel(src)
+		return TRUE
+	// OV Edit End
 	if(length(contents) && I.get_sharpness() && !user.cmode)
 		add_fingerprint(user)
 		playsound(loc, 'sound/combat/hits/bladed/genstab (1).ogg', 60, vary = FALSE)
@@ -275,11 +299,20 @@
 		playsound(get_turf(src), 'sound/blank.ogg', 50, TRUE, -1)
 	pixel_x = rand(-3, 3)
 	pixel_y = rand(-3, 3)
-	if(!skeletonized && owner && !(NOBLOOD in owner.dna?.species?.species_traits))
+	// OV Edit Start
+	var/mob/living/carbon/blood_source = owner || original_owner
+	if(!skeletonized && blood_source && !blood_source.IsPetrified() && !(NOBLOOD in blood_source.dna?.species?.species_traits) && !(INVISBLOOD in blood_source.dna?.species?.species_traits))
 		new /obj/effect/decal/cleanable/blood/splatter(get_turf(src))
+	// OV Edit End
 
 //empties the bodypart from its organs and other things inside it
 /obj/item/bodypart/proc/drop_organs(mob/user, violent_removal)
+	// OV Edit Start
+	if(istype(src, /obj/item/bodypart/head))
+		var/mob/living/original_living = original_owner
+		if(original_living?.has_status_effect(STATUS_EFFECT_PETRIFIED) && original_living.stat != DEAD)
+			original_living.petrification_statue_death("smashed open", user)
+	// OV Edit End
 	var/turf/T = get_turf(src)
 	if(status != BODYPART_ROBOTIC)
 		playsound(T, 'sound/blank.ogg', 50, TRUE, -1)
@@ -609,12 +642,51 @@
 
 	return bodypart_organs
 
+// OV Edit Start
+/obj/item/bodypart/proc/apply_petrified_overlay_color(appearances, statue_color, list/statue_color_matrix)
+	if(!appearances || (!statue_color && !statue_color_matrix))
+		return
+	if(islist(appearances))
+		for(var/appearance as anything in appearances)
+			apply_petrified_overlay_color(appearance, statue_color, statue_color_matrix)
+		return
+	if(!statue_color_matrix)
+		statue_color_matrix = petrification_material_color_matrix(statue_color)
+	if(isimage(appearances))
+		var/image/tinted_image = appearances
+		tinted_image.color = statue_color_matrix
+		if(length(tinted_image.overlays))
+			apply_petrified_overlay_color(tinted_image.overlays, statue_color, statue_color_matrix)
+		if(length(tinted_image.underlays))
+			apply_petrified_overlay_color(tinted_image.underlays, statue_color, statue_color_matrix)
+		return
+	if(isappearance(appearances))
+		var/mutable_appearance/tinted_appearance = appearances
+		tinted_appearance.color = statue_color_matrix
+		if(length(tinted_appearance.overlays))
+			apply_petrified_overlay_color(tinted_appearance.overlays, statue_color, statue_color_matrix)
+		if(length(tinted_appearance.underlays))
+			apply_petrified_overlay_color(tinted_appearance.underlays, statue_color, statue_color_matrix)
+// OV Edit End
+
 //Gives you a proper icon appearance for the dismembered limb
+// OV Edit Start
 /obj/item/bodypart/proc/get_limb_icon(dropped, hideaux = FALSE)
 	icon_state = "" //to erase the default sprite, we're building the visual aspects of the bodypart through overlays alone.
 
 	. = list()
+	var/mob/living/bodypart_owner = owner || original_owner
+	var/statue_color = petrification_render_color
+	if(!statue_color && bodypart_owner?.IsPetrified())
+		petrification_debug("get_limb_icon renderer-fallback bypassed: [petrification_debug_bodypart_summary(src)] owner=[petrification_debug_value(bodypart_owner)] requested_color=[bodypart_owner.get_petrification_render_color(TRUE)]")
+	var/petrified_limb = !!statue_color
+	var/list/petrified_color_matrix
+	if(petrified_limb)
+		petrified_color_matrix = petrification_material_color_matrix(statue_color)
+	if(petrified_limb || bodypart_owner?.IsPetrified())
+		petrification_debug("get_limb_icon start: [petrification_debug_bodypart_summary(src)] dropped=[dropped] hideaux=[hideaux] owner=[petrification_debug_value(bodypart_owner)] owner_petrified=[bodypart_owner?.IsPetrified()] statue_color=[petrification_debug_value(statue_color)] matrix_len=[petrification_debug_len(petrified_color_matrix)]")
 	var/icon_gender = (body_gender == FEMALE) ? "f" : "m" //gender of the icon, if applicable
+	var/render_as_organic_limb = is_organic_limb() || petrified_limb
 
 	var/image_dir = 0
 	if(dropped && !skeletonized)
@@ -623,7 +695,7 @@
 			icon_state = initial(icon_state)
 			return
 		image_dir = SOUTH
-		if(dmg_overlay_type)
+		if(dmg_overlay_type && !petrified_limb)
 			if(brutestate)
 				. += image('icons/mob/dam_mob.dmi', "[dmg_overlay_type]_[body_zone]_[brutestate]0_[icon_gender]", -DAMAGE_LAYER, image_dir)
 			if(burnstate)
@@ -635,7 +707,7 @@
 	. += limb
 
 	if(animal_origin)
-		if(is_organic_limb())
+		if(render_as_organic_limb)
 			limb.icon = 'icons/mob/animal_parts.dmi'
 			if(species_id == "husk")
 				limb.icon_state = "[animal_origin]_husk_[body_zone]"
@@ -644,6 +716,9 @@
 		else
 			limb.icon = 'icons/mob/augmentation/augments.dmi'
 			limb.icon_state = "[animal_origin]_[body_zone]"
+		if(petrified_limb)
+			limb.color = petrified_color_matrix
+			petrification_debug("get_limb_icon animal-color: zone=[body_zone] icon=[limb.icon] state=[limb.icon_state] limb_color=[petrification_debug_value(limb.color)] overlays=[petrification_debug_len(.)]")
 		return
 
 //	if((body_zone != BODY_ZONE_HEAD && body_zone != BODY_ZONE_CHEST))
@@ -652,7 +727,7 @@
 
 	var/skel = skeletonized ? "_s" : ""
 
-	var/is_organic_limb = is_organic_limb()
+	var/is_organic_limb = render_as_organic_limb
 
 	if(is_organic_limb)
 		if(should_draw_greyscale)
@@ -673,6 +748,12 @@
 			if(!hideaux)
 				aux = image(limb.icon, "[aux_zone][skel]", -aux_layer, image_dir)
 				. += aux
+		if(petrified_limb)
+			limb.color = petrified_color_matrix
+			if(aux_zone && !hideaux)
+				aux.color = petrified_color_matrix
+			var/base_aux_color_debug = aux ? petrification_debug_value(aux.color) : "null"
+			petrification_debug("get_limb_icon base-petrified-color: zone=[body_zone] icon=[limb.icon] state=[limb.icon_state] aux=[!!aux] limb_color=[petrification_debug_value(limb.color)] aux_color=[base_aux_color_debug]")
 
 	else
 		limb.icon = species_icon
@@ -686,14 +767,19 @@
 	var/override_color = null
 	if(rotted)
 		override_color = SKIN_COLOR_ROT
+	if(petrified_limb)
+		override_color = sanitize_hexcolor(statue_color, 6, FALSE, "8a8f8d")
 	if(is_organic_limb && should_draw_greyscale && !skeletonized)
-		var/draw_color =  mutation_color || species_color || skin_tone
+		var/draw_color = petrified_limb ? override_color : (mutation_color || species_color || skin_tone)
 		if(rotted || (owner && HAS_TRAIT(owner, TRAIT_ROTMAN) && !owner.mind))
 			draw_color = SKIN_COLOR_ROT
 		if(draw_color)
-			limb.color = "#[draw_color]"
+			limb.color = petrified_limb ? petrified_color_matrix : "#[draw_color]"
 			if(aux_zone && !hideaux)
-				aux.color = "#[draw_color]"
+				aux.color = petrified_limb ? petrified_color_matrix : "#[draw_color]"
+			if(petrified_limb)
+				var/greyscale_aux_color_debug = aux ? petrification_debug_value(aux.color) : "null"
+				petrification_debug("get_limb_icon greyscale-color: zone=[body_zone] draw_color=[petrification_debug_value(draw_color)] limb_color=[petrification_debug_value(limb.color)] aux_color=[greyscale_aux_color_debug]")
 
 	var/draw_organ_features = TRUE
 	var/draw_bodypart_features = TRUE
@@ -708,6 +794,8 @@
 	if(!skeletonized && draw_bodypart_features)
 		var/list/marking_overlays = get_markings_overlays(override_color)
 		if(marking_overlays)
+			if(petrified_limb)
+				petrification_debug("get_limb_icon markings: zone=[body_zone] override=[petrification_debug_value(override_color)] overlays=[petrification_debug_len(marking_overlays)]")
 			. += marking_overlays
 
 	// Organ overlays
@@ -722,8 +810,14 @@
 						should_draw = TRUE
 				if(!should_draw)
 					continue
-			var/mutable_appearance/organ_appearance = organ.get_bodypart_overlay(src)
+			var/organ_appearance = organ.get_bodypart_overlay(src)
 			if(organ_appearance)
+				if(petrified_limb)
+					petrification_debug("get_limb_icon organ-overlay before-tint: zone=[body_zone] skipped_soul=[istype(organ, /obj/item/organ/soul)] appearance_len=[petrification_debug_len(organ_appearance)] [petrification_debug_organ_summary(organ)]")
+				if(petrified_limb && !istype(organ, /obj/item/organ/soul))
+					apply_petrified_overlay_color(organ_appearance, null, petrified_color_matrix)
+				if(petrified_limb)
+					petrification_debug("get_limb_icon organ-overlay after-tint: zone=[body_zone] appearance_len=[petrification_debug_len(organ_appearance)] [petrification_debug_organ_summary(organ)]")
 				. += organ_appearance
 
 	// Feature overlays
@@ -737,7 +831,15 @@
 			var/overlays = feature.get_bodypart_overlay(src)
 			if(!overlays)
 				continue
+			if(petrified_limb)
+				petrification_debug("get_limb_icon feature-overlay before-tint: zone=[body_zone] overlays=[petrification_debug_len(overlays)] [petrification_debug_feature_summary(feature)]")
+			if(petrified_limb)
+				apply_petrified_overlay_color(overlays, null, petrified_color_matrix)
+				petrification_debug("get_limb_icon feature-overlay after-tint: zone=[body_zone] overlays=[petrification_debug_len(overlays)] [petrification_debug_feature_summary(feature)]")
 			. += overlays
+	if(petrified_limb || bodypart_owner?.IsPetrified())
+		petrification_debug("get_limb_icon end: zone=[body_zone] total_overlays=[petrification_debug_len(.)] limb_color=[petrification_debug_value(limb.color)]")
+// OV Edit End
 
 /obj/item/bodypart/deconstruct(disassembled = TRUE)
 	drop_organs()

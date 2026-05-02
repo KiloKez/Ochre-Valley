@@ -103,12 +103,18 @@ There are several things that need to be remembered:
 	START_PROCESSING(SSdamoverlays,src)
 
 /mob/living/carbon/human/proc/update_damage_overlays_real()
-	if(dna.species)
-		if(dna.species.update_damage_overlays(src))
-			return
 	remove_overlay(DAMAGE_LAYER)
 	remove_overlay(LEG_DAMAGE_LAYER)
 	remove_overlay(ARM_DAMAGE_LAYER)
+
+	// OV Edit Start
+	if(IsPetrified())
+		return
+	// OV Edit End
+
+	if(dna.species)
+		if(dna.species.update_damage_overlays(src))
+			return
 
 	var/limb_icon = dna.species.dam_icon
 	var/hidechest = FALSE
@@ -1873,6 +1879,11 @@ generate/load female uniform sprites matching all previously decided variables
 		. += dna.features["mcolor"]
 	else
 		. += "not_coloured"
+	// OV Edit Start
+	if(IsPetrified())
+		. += "petrified"
+		. += get_petrification_render_color(TRUE)
+	// OV Edit End
 
 	. += gender
 	. += age
@@ -1891,6 +1902,14 @@ generate/load female uniform sprites matching all previously decided variables
 			. += "skeletonized"
 		if(BP.dmg_overlay_type)
 			. += BP.dmg_overlay_type
+		// OV Edit Start
+		if(istype(BP, /obj/item/bodypart/taur))
+			var/obj/item/bodypart/taur/taur = BP
+			. += taur.type
+			. += taur.taur_icon_state
+			. += taur.has_taur_color
+			. += taur.taur_color
+		// OV Edit End
 
 	if(HAS_TRAIT(src, TRAIT_HUSK))
 		. += "husk"
@@ -1917,21 +1936,47 @@ generate/load female uniform sprites matching all previously decided variables
 					observers = null
 					break
 
-/mob/living/carbon/human/update_body_parts(redraw = FALSE)
+// OV Edit Start
+/mob/living/carbon/human/update_body_parts(redraw = FALSE, petrified_color_override = null)
+	var/petrified_render_color
+	var/petrified_status_active = IsPetrified()
+	if(!isnull(petrified_color_override))
+		petrified_render_color = sanitize_hexcolor(petrified_color_override, 6, TRUE, "#8a8f8d")
+	else if(petrified_status_active)
+		petrified_render_color = get_petrification_render_color(TRUE)
+	if(petrified_render_color)
+		petrification_debug("update_body_parts renderer-tint bypassed: owner=[key_name(src)] requested_render_color=[petrification_debug_value(petrified_render_color)]")
+		petrified_render_color = null
+	if(petrified_status_active || petrified_render_color)
+		petrification_debug("update_body_parts start: owner=[key_name(src)] redraw=[redraw] override=[petrification_debug_value(petrified_color_override)] status=[petrified_status_active] render_color=[petrification_debug_value(petrified_render_color)] old_key=[petrification_debug_value(icon_render_key)] bodyparts=[petrification_debug_len(bodyparts)]")
+
 	//CHECK FOR UPDATE
 	var/oldkey = icon_render_key
 	icon_render_key = generate_icon_render_key()
+	if(petrified_render_color && !petrified_status_active)
+		icon_render_key += "-petrified-[petrified_render_color]"
+	if(petrified_status_active || petrified_render_color)
+		petrification_debug("update_body_parts key: owner=[key_name(src)] old_key=[petrification_debug_value(oldkey)] new_key=[petrification_debug_value(icon_render_key)] redraw=[redraw]")
 	if(oldkey == icon_render_key && !redraw)
+		if(petrified_status_active || petrified_render_color)
+			petrification_debug("update_body_parts return-same-key: owner=[key_name(src)] key=[petrification_debug_value(icon_render_key)]")
 		return
 
 	remove_overlay(BODYPARTS_LAYER)
 
 	for(var/obj/item/bodypart/BP as anything in bodyparts)
+		BP.petrification_render_color = petrified_render_color
+		if(petrified_status_active || petrified_render_color)
+			petrification_debug("update_body_parts update_limb-before: owner=[key_name(src)] [petrification_debug_bodypart_summary(BP)]")
 		BP.update_limb()
+		if(petrified_status_active || petrified_render_color)
+			petrification_debug("update_body_parts update_limb-after: owner=[key_name(src)] [petrification_debug_bodypart_summary(BP)]")
 
 	//LOAD ICONS
 	if(!redraw)
 		if(limb_icon_cache[icon_render_key])
+			if(petrified_status_active || petrified_render_color)
+				petrification_debug("update_body_parts cache-hit: owner=[key_name(src)] key=[petrification_debug_value(icon_render_key)] cache_len=[petrification_debug_len(limb_icon_cache[icon_render_key])]")
 			load_limb_from_cache()
 			return
 
@@ -1955,6 +2000,8 @@ generate/load female uniform sprites matching all previously decided variables
 			new_limbs += BP.get_limb_icon(hideaux = hiden)
 		else
 			new_limbs += BP.get_limb_icon()
+		if(petrified_status_active || petrified_render_color)
+			petrification_debug("update_body_parts generated-bodypart: owner=[key_name(src)] zone=[BP.body_zone] new_limbs_len=[petrification_debug_len(new_limbs)]")
 	
 	if(isooze(src))
 		for(var/image/limb_alpha in new_limbs)
@@ -1963,9 +2010,14 @@ generate/load female uniform sprites matching all previously decided variables
 	if(length(new_limbs))
 		overlays_standing[BODYPARTS_LAYER] = new_limbs
 		limb_icon_cache[icon_render_key] = new_limbs
+		if(petrified_status_active || petrified_render_color)
+			petrification_debug("update_body_parts cache-store: owner=[key_name(src)] key=[petrification_debug_value(icon_render_key)] new_limbs=[petrification_debug_len(new_limbs)]")
 
 	apply_overlay(BODYPARTS_LAYER)
 	update_damage_overlays()
+	if(petrified_status_active || petrified_render_color)
+		petrification_debug("update_body_parts end: owner=[key_name(src)] key=[petrification_debug_value(icon_render_key)] overlay_len=[petrification_debug_len(overlays_standing[BODYPARTS_LAYER])] new_limbs=[petrification_debug_len(new_limbs)]")
+// OV Edit End
 
 /mob/living/carbon/proc/has_boobed_overlay()
 	var/obj/item/organ/breasts/boobs = getorganslot(ORGAN_SLOT_BREASTS)
