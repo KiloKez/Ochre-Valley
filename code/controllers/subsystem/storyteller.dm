@@ -1119,11 +1119,11 @@ SUBSYSTEM_DEF(gamemode)
 /datum/controller/subsystem/gamemode/proc/story_bonus_flags(storyteller_type)
 	if(!ispath(storyteller_type, /datum/storyteller))
 		return STORYTELLER_FAVOR_NONE
+	/*OV Remove
 	switch(storyteller_type)
-		/*OV Remove
 		if(/datum/storyteller/abyssor)
 			return STORYTELLER_FAVOR_DREAMWALKER
-		*/
+	*/
 	return STORYTELLER_FAVOR_NONE
 
 /datum/controller/subsystem/gamemode/proc/story_policy_type(roundstart = FALSE, storyteller_type = null)
