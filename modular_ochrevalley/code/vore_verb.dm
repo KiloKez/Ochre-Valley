@@ -8,7 +8,8 @@
 #define PETRIFICATION_COLOUR_PRIORITY TEMPORARY_COLOUR_PRIORITY
 #define PETRIFICATION_COLOUR_FILTER "petrification_colour"
 #define PETRIFICATION_CAST_TIME (5 SECONDS)
-#define PETRIFICATION_PERMANENT_HELP "Permanent means this petrification cannot be reversed for the duration of the round by any means."
+#define PETRIFICATION_PERMANENT_WARNING "This petrification cannot be undone by any normal means during the round."
+#define PETRIFICATION_PERMANENT_HELP "Permanent means this petrification cannot be reversed for the duration of the round by any normal means."
 #define PETRIFICATION_SENSITIVE_HELP "Sensitive means ERP panel actions may be performed on the petrified target, allowing them to feel pleasure and pain."
 #define PETRIFICATION_PRESET_NAME_MAX 32
 #define PETRIFICATION_TEXT_MAX 240
@@ -393,7 +394,10 @@
 		if(length(get_petrification_reversal_targets()))
 			choices += "Reverse"
 		choices += "Cancel"
-		var/choice = tgui_alert(src, "Petrify a nearby player using your current petrification options?", "Petrification", choices)
+		var/petrification_prompt = "Petrify a nearby player using your current petrification options?"
+		if(petrification_permanent)
+			petrification_prompt += "\n\nWarning: " + PETRIFICATION_PERMANENT_WARNING
+		var/choice = tgui_alert(src, petrification_prompt, "Petrification", choices)
 		if(choice == "Customize")
 			if(!configure_petrification())
 				return
@@ -477,7 +481,10 @@
 	if(!target?.client)
 		to_chat(src, span_warning("[target] is not able to consent right now."))
 		return FALSE
-	var/choice = tgui_alert(target, "[src] wants to petrify you. Do you consent to this?", "Petrification Consent", list("Yes", "No"))
+	var/consent_prompt = "[src] wants to petrify you. Do you consent to this?"
+	if(petrification_permanent)
+		consent_prompt += "\n\nWarning: " + PETRIFICATION_PERMANENT_WARNING
+	var/choice = tgui_alert(target, consent_prompt, "Petrification Consent", list("Yes", "No"))
 	if(choice != "Yes")
 		to_chat(src, span_warning("[target] declines petrification."))
 		if(target)
@@ -710,17 +717,21 @@
 			potential_targets |= H
 	return potential_targets
 
-/mob/living/proc/get_grabbed_petrified_posture_grab()
-	var/obj/item/active_item = get_active_held_item()
-	if(istype(active_item, /obj/item/grabbing))
-		var/obj/item/grabbing/active_grab = active_item
-		if(can_use_petrified_posture_grab(active_grab))
-			return active_grab
-	var/obj/item/inactive_item = get_inactive_held_item()
-	if(istype(inactive_item, /obj/item/grabbing))
-		var/obj/item/grabbing/inactive_grab = inactive_item
-		if(can_use_petrified_posture_grab(inactive_grab))
-			return inactive_grab
+/mob/living/proc/get_grabbed_petrified_posture_grab(mob/living/carbon/human/target)
+	for(var/obj/item/held_item as anything in held_items)
+		if(!istype(held_item, /obj/item/grabbing))
+			continue
+		var/obj/item/grabbing/held_grab = held_item
+		if(target && held_grab.grabbed != target)
+			continue
+		if(can_use_petrified_posture_grab(held_grab))
+			return held_grab
+	if(target?.grabbedby)
+		for(var/obj/item/grabbing/target_grab as anything in target.grabbedby)
+			if(target_grab.grabbee != src)
+				continue
+			if(can_use_petrified_posture_grab(target_grab))
+				return target_grab
 
 /mob/living/proc/can_use_petrified_posture_grab(obj/item/grabbing/grab, notify = FALSE)
 	if(!grab || QDELETED(grab) || grab.grabbee != src)
@@ -1206,6 +1217,53 @@
 			return dullahan.my_head
 	return null
 
+/mob/living/carbon/human/proc/get_petrified_head_view_target(obj/item/bodypart/head/view_head)
+	if(!view_head || QDELETED(view_head))
+		return null
+	if(ishuman(view_head.loc) && view_head.loc != src)
+		return view_head.loc
+	return view_head
+
+/mob/living/carbon/human/get_hearing_atom()
+	var/obj/item/bodypart/head/view_head = get_petrified_view_head()
+	if(view_head)
+		return view_head
+	if(isdullahan(src))
+		var/datum/species/dullahan/dullahan = dna?.species
+		if(dullahan?.headless && dullahan.my_head && !QDELETED(dullahan.my_head))
+			return dullahan.my_head
+	return ..()
+
+/mob/living/carbon/human/get_message_origin()
+	var/obj/item/bodypart/head/view_head = get_petrified_view_head()
+	if(view_head)
+		return get_petrified_head_view_target(view_head)
+	return ..()
+
+/obj/item/bodypart/head/proc/get_petrified_message_owner()
+	var/mob/living/carbon/human/human_owner = ishuman(original_owner) ? original_owner : null
+	if(human_owner?.get_petrified_view_head() == src)
+		return human_owner
+	return null
+
+/obj/item/bodypart/head/is_character_message_origin()
+	return !!get_petrified_message_owner()
+
+/mob/living/carbon/human/reset_perspective(atom/A)
+	var/obj/item/bodypart/head/view_head = get_petrified_view_head()
+	if(view_head && (!A || A == src || A == loc))
+		A = get_petrified_head_view_target(view_head)
+	return ..(A)
+
+/mob/living/carbon/human/get_remote_view_fullscreens(mob/user)
+	if(ishuman(user))
+		var/mob/living/carbon/human/human_user = user
+		var/obj/item/bodypart/head/view_head = human_user.get_petrified_view_head()
+		if(view_head?.loc == src)
+			view_head.get_remote_view_fullscreens(user)
+			return
+	return ..()
+
 /mob/living/carbon/human/proc/refresh_petrified_head_vision()
 	var/datum/status_effect/petrified/petrified = has_status_effect(STATUS_EFFECT_PETRIFIED)
 	if(!petrified)
@@ -1223,9 +1281,7 @@
 		var/obj/item/organ/dullahan_vision/vision = getorganslot(ORGAN_SLOT_HUD)
 		if(vision)
 			vision.viewing_head = TRUE
-	var/atom/view_target = view_head
-	if(ishuman(view_head.loc) && view_head.loc != src)
-		view_target = view_head.loc
+	var/atom/view_target = get_petrified_head_view_target(view_head)
 	reset_perspective(view_target)
 	petrification_debug("head_vision forced: owner=[key_name(src)] head=[view_head] head_loc=[petrification_debug_value(view_head.loc)] target=[petrification_debug_value(view_target)]")
 	return TRUE
@@ -1297,7 +1353,8 @@
 	ADD_TRAIT(owner, TRAIT_NOBREATH, PETRIFICATION_TRAIT_SOURCE)
 	ADD_TRAIT(owner, TRAIT_TOXIMMUNE, PETRIFICATION_TRAIT_SOURCE)
 	ADD_TRAIT(owner, TRAIT_STUNIMMUNE, PETRIFICATION_TRAIT_SOURCE)
-	ADD_TRAIT(owner, TRAIT_CRITICAL_WEAKNESS, PETRIFICATION_TRAIT_SOURCE)
+	ADD_TRAIT(owner, TRAIT_NOHUNGER, PETRIFICATION_TRAIT_SOURCE)
+	ADD_TRAIT(owner, TRAIT_INFINITE_ENERGY, PETRIFICATION_TRAIT_SOURCE)
 	ADD_TRAIT(owner, TRAIT_EASYDISMEMBER, PETRIFICATION_TRAIT_SOURCE)
 	owner.petrification_material = material
 	owner.petrification_color = material_color
@@ -1315,7 +1372,11 @@
 		owner.visible_message(span_warning(petrification_format_message(flavour_texts[PETRIFICATION_TEXT_APPLY_PUBLIC_PETRIFIER], petrifier, owner, material)), span_userdanger(self_message))
 	else
 		owner.visible_message(span_warning(petrification_format_message(flavour_texts[PETRIFICATION_TEXT_APPLY_PUBLIC], petrifier, owner, material)), span_userdanger(self_message))
-	to_chat(owner, span_notice("You have been petrified and will no longer be able to move, speak, or take any meaningful actions until you have been restored to your former self. You may choose to 'Surrender' by clicking the Petrification option in the Vore panel to leave your body behind and become a ghost."))
+	var/petrified_notice = "You have been petrified and will no longer be able to move, speak, or take any meaningful actions until you have been restored to your former self."
+	if(permanent)
+		petrified_notice = "You have been permanently petrified and will no longer be able to move, speak, or take any meaningful actions. " + PETRIFICATION_PERMANENT_WARNING
+	petrified_notice += " You may choose to 'Surrender' by clicking the Petrification option in the Vore panel to leave your body behind and become a ghost."
+	to_chat(owner, span_notice(petrified_notice))
 
 /datum/status_effect/petrified/tick()
 	owner?.stabilize_petrified_body()
@@ -1337,7 +1398,8 @@
 		REMOVE_TRAIT(owner, TRAIT_NOBREATH, PETRIFICATION_TRAIT_SOURCE)
 		REMOVE_TRAIT(owner, TRAIT_TOXIMMUNE, PETRIFICATION_TRAIT_SOURCE)
 		REMOVE_TRAIT(owner, TRAIT_STUNIMMUNE, PETRIFICATION_TRAIT_SOURCE)
-		REMOVE_TRAIT(owner, TRAIT_CRITICAL_WEAKNESS, PETRIFICATION_TRAIT_SOURCE)
+		REMOVE_TRAIT(owner, TRAIT_NOHUNGER, PETRIFICATION_TRAIT_SOURCE)
+		REMOVE_TRAIT(owner, TRAIT_INFINITE_ENERGY, PETRIFICATION_TRAIT_SOURCE)
 		REMOVE_TRAIT(owner, TRAIT_EASYDISMEMBER, PETRIFICATION_TRAIT_SOURCE)
 		restore_petrified_appearance()
 		owner.update_mobility()

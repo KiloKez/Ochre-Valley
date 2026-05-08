@@ -439,6 +439,21 @@
 	. = ..()
 	if(was_petrified_view_head && petrified_owner?.IsPetrified())
 		petrified_owner.refresh_petrified_head_vision()
+
+/obj/item/bodypart/head/proc/get_remote_view_container()
+	var/atom/current = loc
+	while(current && !isturf(current))
+		if(istype(current, /obj/structure/closet))
+			return current
+		current = current.loc
+	return null
+
+/obj/item/bodypart/head/get_remote_view_fullscreens(mob/user)
+	var/atom/remote_view_container = get_remote_view_container()
+	if(remote_view_container)
+		remote_view_container.get_remote_view_fullscreens(user)
+		return
+	user.clear_fullscreen("remote_view", 0)
 // OV Edit End
 
 //Attach a limb to a human and drop any existing limb of that type.

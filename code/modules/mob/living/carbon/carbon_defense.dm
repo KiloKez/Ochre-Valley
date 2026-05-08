@@ -490,6 +490,11 @@
 /mob/living/carbon/can_hear()
 	. = FALSE
 	var/obj/item/organ/ears/ears = getorganslot(ORGAN_SLOT_EARS)
+	var/atom/movable/hearing_atom = get_hearing_atom()
+	if(istype(hearing_atom, /obj/item/bodypart/head))
+		var/obj/item/bodypart/head/hearing_head = hearing_atom
+		if(hearing_head.ears)
+			ears = hearing_head.ears
 	if(isdullahan(src))
 		var/mob/living/carbon/human/user = src
 		var/datum/species/dullahan/dullahan = user.dna.species

@@ -1469,6 +1469,10 @@
 // The src mob is trying to strip an item from someone
 // Override if a certain type of mob should be behave differently when stripping items (can't, for example)
 /mob/living/stripPanelUnequip(obj/item/what, mob/who, where)
+	if(IsPetrified())
+		to_chat(src, span_warning("You cannot do this while petrified."))
+		return
+
 	if(!what.canStrip(who))
 		to_chat(src, span_warning("I can't remove \the [what.name], it appears to be stuck!"))
 		return
@@ -1531,6 +1535,10 @@
 // The src mob is trying to place an item on someone
 // Override if a certain mob should be behave differently when placing items (can't, for example)
 /mob/living/stripPanelEquip(obj/item/what, mob/who, where)
+	if(IsPetrified())
+		to_chat(src, span_warning("You cannot do this while petrified."))
+		return
+
 	what = src.get_active_held_item()
 	if(what && (HAS_TRAIT(what, TRAIT_NODROP)))
 		to_chat(src, span_warning("I can't put \the [what.name] on [who], it's stuck to my hand!"))

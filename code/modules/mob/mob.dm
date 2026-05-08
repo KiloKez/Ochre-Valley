@@ -203,6 +203,7 @@ GLOBAL_VAR_INIT(mobids, 1)
 	if(!isnum(vision_distance))
 		vision_distance = DEFAULT_MESSAGE_RANGE
 	var/list/hearers = get_hearers_in_view(vision_distance, src) //caches the hearers and then removes ignored mobs.
+	add_remote_hearing_atom_listeners(hearers, src, vision_distance)
 	hearers -= ignored_mobs
 	if(self_message)
 		hearers -= src
@@ -246,6 +247,7 @@ GLOBAL_VAR_INIT(mobids, 1)
  */
 /atom/proc/audible_message(message, deaf_message, hearing_distance = DEFAULT_MESSAGE_RANGE, self_message, runechat_message = null, log_seen = NONE, log_seen_msg = null, custom_spans = list("emote"), used_language = /datum/language/common)
 	var/list/hearers = get_hearers_in_view(hearing_distance, src)
+	add_remote_hearing_atom_listeners(hearers, src, hearing_distance)
 	if(self_message)
 		hearers -= src
 	for(var/mob/M in hearers)
@@ -273,44 +275,53 @@ GLOBAL_VAR_INIT(mobids, 1)
 
 /atom/proc/loud_message(message, hearing_distance = DEFAULT_MESSAGE_RANGE, directional = TRUE)
 	var/list/listening = get_hearers_in_view(hearing_distance, src)
+	add_remote_hearing_atom_listeners(listening, src, hearing_distance)
 	for(var/_M in GLOB.player_list)
 		var/mob/M = _M
-		if(!M.client) //client is so that ghosts don't have to listen to mice
+		if(!M?.client) //client is so that ghosts don't have to listen to mice
 			continue
-		if(!M)
+		var/atom/movable/hearing_atom = M.get_hearing_atom()
+		if(!hearing_atom)
+			hearing_atom = M
+		var/turf/hearing_turf = get_turf(hearing_atom)
+		if(!hearing_turf)
 			continue
-		if(!M.client)
-			continue
-		if(get_dist(M, src) > hearing_distance) //they're out of range of normal hearing
+		if(get_dist(hearing_turf, src) > hearing_distance) //they're out of range of normal hearing
 			if(M.client.prefs)
 				if(!(M.client.prefs.chat_toggles & CHAT_GHOSTEARS)) //they're talking normally and we have hearing at any range off
 					continue
-		if(!is_in_zweb(src.z,M.z))
+		if(!is_in_zweb(src.z, hearing_turf.z))
 			continue
 		listening |= M
 
 	for(var/mob/living/L in listening)
 		var/strz
 		var/strdir
-		if(L.STAPER <= 8 && !(L in viewers(world.view, src)))
+		var/atom/movable/hearing_atom = L.get_hearing_atom()
+		if(!hearing_atom)
+			hearing_atom = L
+		var/turf/hearing_turf = get_turf(hearing_atom)
+		if(!hearing_turf)
+			continue
+		if(L.STAPER <= 8 && get_dist(hearing_turf, src) > world.view)
 			to_chat(L, span_warning("You hear something... somewhere!"))
 			continue
-		if(L.z != src.z)
-			var/zdiff = abs(L.z - src.z)
-			if(L.z > src.z)
+		if(hearing_turf.z != src.z)
+			var/zdiff = abs(hearing_turf.z - src.z)
+			if(hearing_turf.z > src.z)
 				switch(zdiff)
 					if(1)
 						strz = "below"
 					if(2 to 999)
 						strz = "far below"
-			if(L.z < src.z)
+			if(hearing_turf.z < src.z)
 				switch(zdiff)
 					if(1)
 						strz = "above"
 					if(2 to 999)
 						strz = "far above"
 		if(directional)
-			var/dir = get_dir(L, src)
+			var/dir = get_dir(hearing_atom, src)
 			strdir = dir2text(dir)
 		//message + "from" + strz if we have it. If we do we add "and" + "strdir", otherwise only "strdir".
 		//If there's a z difference: "A rock can be heard falling" + "from" + "below/above/etc" + "and" + "northeast"

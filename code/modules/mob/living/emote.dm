@@ -1611,7 +1611,10 @@
 			return
 
 		// A COMSIG here would be nice, in my attempts it sadly didn't work out well for the relay.
-		var/atom/movable/emotelocation = user
+		var/atom/movable/message_origin = user.get_message_origin()
+		if(!message_origin)
+			message_origin = user
+		var/atom/movable/emotelocation = message_origin
 		var/mob/living/carbon/human/human
 		if(ishuman(user))
 			human = user
@@ -1621,10 +1624,13 @@
 		if(isdullahan(user))
 			dullahan = human.dna.species
 			vision = human.getorganslot(ORGAN_SLOT_HUD)
-			if(dullahan.headless && vision.viewing_head)
+			if(emotelocation == user && dullahan.headless && vision.viewing_head)
 				emotelocation = dullahan.my_head
 
 		user.log_message(msg, LOG_EMOTE)
+		var/emote_display_name = "[emotelocation]"
+		if(message_origin != user)
+			emote_display_name = user.GetVoice()
 		var/pre_color_msg = msg
 		if (use_params_for_runechat) // apply puncutation stripping here where appropriate
 			var/static/regex/regex = regex(@"[,.!?]", "g")
@@ -1635,9 +1641,9 @@
 			var/color_to_use = human.voice_color
 			if(human.voicecolor_override)
 				color_to_use = human.voicecolor_override
-			msg = "<span style='color:#[color_to_use];text-shadow:-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000;'><b>[emotelocation]</b></span> " + msg
+			msg = "<span style='color:#[color_to_use];text-shadow:-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000;'><b>[emote_display_name]</b></span> " + msg
 		else
-			msg = "<b>[emotelocation]</b> " + msg
+			msg = "<b>[emote_display_name]</b> " + msg
 		for(var/mob/M in GLOB.dead_mob_list)
 			if(!M.client || isnewplayer(M))
 				continue

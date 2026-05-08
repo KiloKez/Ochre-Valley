@@ -82,13 +82,16 @@
 		return
 	if(!action_type)
 		return
+	var/datum/sex_action/action = SEX_ACTION(action_type)
+	if(action.masturbation && user.IsPetrified())
+		to_chat(user, span_warning("You cannot do this while petrified."))
+		return
 	if(!can_perform_action(action_type))
 		return
 
 	desire_stop = FALSE
 	current_action = action_type
 	inactivity = 0
-	var/datum/sex_action/action = SEX_ACTION(current_action)
 	log_combat(user, target, "Started sex action: [action.name] with [target.name].")
 	INVOKE_ASYNC(src, PROC_REF(sex_action_loop))
 
@@ -171,6 +174,8 @@
 	var/obj/item/bodypart/head/held_petrified_head = user.get_held_petrified_head_for(target)
 	// OV Edit End
 	if(!target)
+		return FALSE
+	if(action.masturbation && user.IsPetrified())
 		return FALSE
 	if(user.stat != CONSCIOUS)
 		return FALSE

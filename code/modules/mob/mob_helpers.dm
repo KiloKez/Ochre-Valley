@@ -1096,6 +1096,31 @@
 /mob/proc/can_hear()
 	. = TRUE
 
+///The atom this mob currently hears from.
+/mob/proc/get_hearing_atom()
+	return src
+
+/proc/add_remote_hearing_atom_listeners(list/listening, atom/source, hearing_range)
+	if(!listening || !source || !isnum(hearing_range))
+		return
+	var/turf/source_turf = get_turf(source)
+	if(!source_turf)
+		return
+	for(var/mob/listener as anything in GLOB.player_list)
+		if(!listener?.client)
+			continue
+		var/atom/movable/hearing_atom = listener.get_hearing_atom()
+		if(!hearing_atom || hearing_atom == listener)
+			continue
+		var/turf/hearing_turf = get_turf(hearing_atom)
+		if(!hearing_turf)
+			continue
+		if(get_dist(hearing_turf, source_turf) > hearing_range)
+			continue
+		if(!is_in_zweb(source_turf.z, hearing_turf.z))
+			continue
+		listening |= listener
+
 /**
   * Examine text for traits shared by multiple types.
   *

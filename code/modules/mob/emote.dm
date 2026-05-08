@@ -3,7 +3,7 @@
 	// OV Edit Start
 	if(intentional && !custom_me && isliving(src))
 		var/mob/living/living_user = src
-		if(living_user.IsPetrified())
+		if(living_user.IsPetrified() && living_user.get_message_origin() == living_user)
 			to_chat(src, span_warning("I can't do that while petrified."))
 			return
 	// OV Edit End
@@ -51,7 +51,9 @@
 
 /atom/movable/proc/send_speech_emote(message, range = 7, obj/source = src, bubble_type, list/spans, datum/language/message_language = null, message_mode, original_message)
 	var/rendered = compose_message(src, message_language, message, , spans, message_mode)
-	for(var/_AM in get_hearers_in_view(range, source))
+	var/list/listening = get_hearers_in_view(range, source)
+	add_remote_hearing_atom_listeners(listening, source, range)
+	for(var/_AM in listening)
 		var/atom/movable/AM = _AM
 		AM.Hear(rendered, src, message_language, message, , spans, message_mode)
 //	if(intentional)
