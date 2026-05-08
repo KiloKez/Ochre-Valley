@@ -11,7 +11,8 @@
 	grid_width = 32
 	grid_height = 64
 	var/overarmor
-	sellprice = 6
+	throw_on_break = TRUE
+	sellprice = 6 //CC edit
 
 /obj/item/clothing/wrists/roguetown/MiddleClick(mob/user, params)
 	. = ..()

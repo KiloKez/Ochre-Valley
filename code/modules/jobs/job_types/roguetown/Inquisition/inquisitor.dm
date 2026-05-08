@@ -6,7 +6,7 @@
 	total_positions = 1
 	spawn_positions = 1
 	allowed_sexes = list(MALE, FEMALE)
-	allowed_races = RACES_SHUNNED_UP		//Would you trust a machine to handle a role that requires non-logical intuition and commanding? Maybe. Could undo this if the community likes it. Purpose-built supermachines sound cool, too.
+	forbidden_races = list(RACES_CONSTRUCT RACES_DESPISED)		//Would you trust a machine to handle a role that requires non-logical intuition and commanding? Maybe. Could undo this if the community likes it. Purpose-built supermachines sound cool, too.
 	allowed_patrons = list(/datum/patron/old_god) //Requires your character's patron to be Psydon. This role is explicitly designed to be played by Psydonites, only, and almost everything they have - down to the equipment and statblock - is rooted in Psydonism. Do NOT make this accessable to other faiths, unless you go through the efforts of redesigning it from the ground up.
 	tutorial = "You are a fervent adherent to the doctrine of PSYDON and entrusted to be an agent of the Missionata Psydonia, the missionary organisation of Otava - the largest Psydonic kingdom left on this world. They have entrusted you to represent the True Faith to the heathen world, to extend the hope and endurance it brings, to protect the flock and maintain cordial relations. You dance a narrow path between zeal and diplomacy in a world of wayward heathens, so be delicate, 'lest you end up strapped onto a pyre." //OV Edit per Lore Doc
 	whitelist_req = TRUE
