@@ -10,7 +10,7 @@
 	antagpanel_category = "Dreamwalker"
 	job_rank = ROLE_DREAMWALKER
 	storyteller_antag_flags = STORYTELLER_ANTAG_NONE // OV Edit: Stop storytellers from injecting this antagonist
-	storyteller_favor_flags = STORYTELLER_FAVOR_DREAMWALKER
+	storyteller_favor_flags = STORYTELLER_FAVOR_NONE // OV Edit: Stop storytellers from injecting this antagonist
 	confess_lines = list(
 		"MY VISION ABOVE ALL!",
 		"I'LL TAKE YOU TO MY REALM!",
