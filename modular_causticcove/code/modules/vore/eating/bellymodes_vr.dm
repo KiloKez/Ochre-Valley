@@ -210,9 +210,9 @@
 				var/mob/living/carbon/human/H = L
 
 				//Numbing flag
-				if(mode_flags & DM_FLAG_NUMBING)
+				/*if(mode_flags & DM_FLAG_NUMBING) //OV Edit - Not A Real Reagent Sire
 					if(H.reagents.get_reagent_amount(REAGENT_ID_NUMBENZYME) < 2)
-						H.reagents.add_reagent(REAGENT_ID_NUMBENZYME,4)
+						H.reagents.add_reagent(REAGENT_ID_NUMBENZYME,4)*/
 
 				//Worn items flag
 				if(mode_flags & DM_FLAG_AFFECTWORN && H.contaminate_pref)
@@ -329,6 +329,9 @@
 
 	var/personal_nutrition_modifier = M.get_digestion_nutrition_modifier()
 	var/pred_digestion_efficiency = owner.get_digestion_efficiency_modifier()
+
+	if((mode_flags & DM_FLAG_LEAVEREMAINS) && M.digest_leave_remains)
+		handle_remains_leaving(M)
 
 	digestion_death(M)
 	if(show_liquids && reagent_mode_flags & DM_FLAG_REAGENTSDIGEST && reagents.total_volume < reagents.maximum_volume) // digestion producing reagents

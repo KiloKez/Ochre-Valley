@@ -131,7 +131,7 @@
 	//Actual full digest modes
 	var/tmp/static/list/digest_modes = list(DM_HOLD,DM_DIGEST,DM_ABSORB,DM_DRAIN,DM_SELECT,DM_UNABSORB,DM_HEAL,DM_SHRINK,DM_GROW,DM_SIZE_STEAL,DM_EGG)
 	//Digest mode addon flags
-	var/tmp/static/list/mode_flag_list = list("Numbing" = DM_FLAG_NUMBING, "Stripping" = DM_FLAG_STRIPPING, "Muffles" = DM_FLAG_THICKBELLY, "Affect Worn Items" = DM_FLAG_AFFECTWORN, "Complete Absorb" = DM_FLAG_FORCEPSAY, "Spare Prosthetics" = DM_FLAG_SPARELIMB, "Slow Body Digestion" = DM_FLAG_SLOWBODY, "Muffle Items" = DM_FLAG_MUFFLEITEMS, "TURBO MODE" = DM_FLAG_TURBOMODE, "Absorbed Prey Can Devour" = DM_FLAG_ABSORBEDVORE, "Makes Prey Wet" = DM_FLAG_WETTENS, "Strip Digest" = DM_FLAG_STRIP_DIGEST, "Lewd Struggles" = DM_FLAG_LEWD_STRUGGLES) //OV EDIT
+	var/tmp/static/list/mode_flag_list = list("Numbing" = DM_FLAG_NUMBING, "Stripping" = DM_FLAG_STRIPPING, "Leave Remains" = DM_FLAG_LEAVEREMAINS, "Muffles" = DM_FLAG_THICKBELLY, "Affect Worn Items" = DM_FLAG_AFFECTWORN, "Complete Absorb" = DM_FLAG_FORCEPSAY, "Spare Prosthetics" = DM_FLAG_SPARELIMB, "Slow Body Digestion" = DM_FLAG_SLOWBODY, "Muffle Items" = DM_FLAG_MUFFLEITEMS, "TURBO MODE" = DM_FLAG_TURBOMODE, "Absorbed Prey Can Devour" = DM_FLAG_ABSORBEDVORE, "Makes Prey Wet" = DM_FLAG_WETTENS, "Strip Digest" = DM_FLAG_STRIP_DIGEST, "Lewd Struggles" = DM_FLAG_LEWD_STRUGGLES) //OV EDIT
 	//Item related modes
 	var/tmp/static/list/item_digest_modes = list(IM_HOLD,IM_DIGEST_FOOD,IM_DIGEST,IM_DIGEST_PARALLEL,IM_SMELTING)
 	//drain modes
@@ -195,8 +195,8 @@
 	var/nutri_reagent_gen = FALSE					//if belly produces reagent over time using nutrition, needs to be optimized to use subsystem - Jack
 	var/is_beneficial = FALSE							//Sets a reagent as a beneficial one / healing reagents
 	var/list/generated_reagents = list(REAGENT_ID_WATER = 1) //Any number of reagents, the associated value is how many units are generated per process()
-	var/reagent_name = REAGENT_ID_WATER 						//What is shown when reagents are removed, doesn't need to be an actual reagent
-	var/reagentid = REAGENT_ID_WATER							//Selected reagent's id, for use in puddle system currently
+	var/reagent_name = REAGENT_WATER					//What is shown when reagents are removed, doesn't need to be an actual reagent
+	var/reagentid = REAGENT_WATER							//Selected reagent's id, for use in puddle system currently
 	var/reagentcolor = "#0064C877"					//Selected reagent's color, for use in puddle system currently
 	var/custom_reagentcolor							//Custom reagent color. Blank for normal reagent color
 	var/custom_reagentalpha							//Custom reagent alpha. Blank for capacity based alpha
@@ -891,10 +891,14 @@
 
 	// If digested prey is also a pred... anyone inside their bellies gets moved up.
 	if(is_vore_predator(M))
-		M.release_vore_contents(include_absorbed = TRUE, silent = TRUE)
+		SSinventory_return.preserve_or_eject_belly_contents(M)	//OV EDIT - Preserve any unaccounted for belly contents before releasing things
 
 	//Drop all items into the belly.
 	//if(CONFIG_GET(flag/items_survive_digestion))
+	if(mode_flags & DM_FLAG_STRIP_DIGEST && M.client?.prefs_vr.strip_pref)		//OV ADD START - INVENTORY RETURN PORT FROM RS#1261
+		SSinventory_return.catalogue_full_inventory(M)
+	else
+		SSinventory_return.digest_inventory_preserve(M)	//OV ADD END
 	var/Itemlist = M.get_equipped_items(TRUE)
 	Itemlist += M.held_items
 	for(var/obj/item/W in Itemlist)
@@ -911,7 +915,7 @@
 		var/mob/living/carbon/human/Pred = owner
 		if(ishuman(M))
 			var/mob/living/carbon/human/Prey = M
-			Prey.reagents.del_reagent(REAGENT_ID_NUMBENZYME)
+			//Prey.reagents.del_reagent(REAGENT_ID_NUMBENZYME) //OV Edit - Not A Real Reagent Sire
 			Prey.reagents.trans_to(Pred.reagents, Prey.reagents.total_volume, 0.5) // Copy=TRUE because we're deleted anyway
 			Prey.reagents.trans_to(Pred.reagents, Prey.reagents.total_volume, 0.5) // Therefore don't bother spending cpu
 			//Don't need this stuff in our reagentseam.

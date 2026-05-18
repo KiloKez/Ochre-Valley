@@ -247,6 +247,8 @@ GLOBAL_LIST_EMPTY(chosen_names)
 	var/noble_gossip
 
 	var/averse_chosen_faction = "Inquisition"
+	var/cursed_animal = "mouse" //OV ADD
+	var/cursed_animal_colour = "#FFFFFF" //OV ADD
 
 	var/datum/voicepack/temp_vp
 
@@ -259,6 +261,16 @@ GLOBAL_LIST_EMPTY(chosen_names)
 
 	/// Whether we can see the feint HUD bar.
 	var/feint_hud = FALSE 
+
+	//OV edit
+	var/badge_gng = "No"
+	var/badge_vore = "Unset"
+	var/badge_willing = "Unset"
+	var/badge_sexuality = "Unset"
+	var/badge_erp = "No" 
+	var/badge_lean = "Unset"
+	var/badge_type = "Unset"
+	//OV edit end
 
 /datum/preferences/New(client/C)
 	parent = C
@@ -298,6 +310,21 @@ GLOBAL_LIST_EMPTY(chosen_names)
 		directory_sexualitytag = "Unset"
 	if(!directory_pvp)
 		directory_pvp = "No PvP"
+	
+	if(!badge_gng)
+		badge_gng = "No"
+	if(!badge_vore)
+		badge_vore = "Unset"
+	if(!badge_willing)
+		badge_willing = "Unset"
+	if(!badge_sexuality)
+		badge_sexuality = "Unset"
+	if(!badge_erp)
+		badge_erp = "No" 
+	if(!badge_lean)
+		badge_lean = "Unset"
+	if(!badge_type)
+		badge_type = "Unset"
 	//OV edit end
 
 	//Set the race to properly run race setter logic
@@ -359,6 +386,8 @@ GLOBAL_LIST_EMPTY(chosen_names)
 	reset_descriptors()
 	virtue_origin = new pref_species.origin_default
 	taur_type = null
+	var/datum/charflaw/no_flaw = new /datum/charflaw/noflaw()
+	charflaws = list(no_flaw)
 
 #define APPEARANCE_CATEGORY_COLUMN "<td valign='top' width='14%'>"
 #define MAX_MUTANT_ROWS 4
@@ -665,6 +694,21 @@ GLOBAL_LIST_EMPTY(chosen_names)
 				if(!averse_chosen_faction)
 					averse_chosen_faction = "Inquisition"
 				dat += "<b>Loathed Group:</b> <a href='?_src_=prefs;preference=charflaw_averse_choice;task=input'>[averse_chosen_faction]</a><BR>"
+			
+			//OV edit
+			var/has_dendor_touched = FALSE
+			for(var/datum/charflaw/cf in charflaws)
+				if(istype(cf, /datum/charflaw/dendor_touched))
+					has_dendor_touched = TRUE
+					break
+			if(has_dendor_touched)
+				if(!cursed_animal)
+					cursed_animal = "mouse"
+				if(!cursed_animal_colour)
+					cursed_animal_colour = "#FFFFFF"
+				dat += "<b>Cursed Animal:</b> <a href='?_src_=prefs;preference=charflaw_cursed_animal_choice;task=input'>[cursed_animal]</a><BR>"
+				dat += "<b>Cursed Animal Color:</b><span style='border: 1px solid #161616; background-color: [cursed_animal_colour];'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span> <a href='?_src_=prefs;preference=charflaw_cursed_animal_colour;task=input'>Change</a><BR>"
+			//OV edit end
 			var/datum/faith/selected_faith = GLOB.faithlist[selected_patron?.associated_faith]
 			dat += "<b>Faith:</b> <a href='?_src_=prefs;preference=faith;task=input'>[selected_faith?.name || "FUCK!"]</a><BR>"
 			dat += "<b>Patron:</b> <a href='?_src_=prefs;preference=patron;task=input'>[selected_patron?.name || "FUCK!"]</a><BR>"
@@ -777,6 +821,7 @@ GLOBAL_LIST_EMPTY(chosen_names)
 			dat += "<br><b>Sexuality Tag:</b> <a href='?_src_=prefs;preference=directory_sexualitytag;task=input'>[directory_sexualitytag || "Unset"]</a>"
 			dat += "<br><b>PvP Opt-In:</b> <a href='?_src_=prefs;preference=directory_pvp;task=input'>[directory_pvp || "No PvP"]</a>"
 			dat += "<br><b>Directory Ad:</b> <a href='?_src_=prefs;preference=directory_ad;task=input'>Set</a>"
+			dat += "<br><br><b>Preference Badges:</b> <a href='?_src_=prefs;preference=pref_badges;task=menu'>Open Menu</a>"
 			dat += "</td>"
 			dat += "</td>"
 			dat += "</tr></table>"
@@ -1607,7 +1652,11 @@ Slots: [job.spawn_positions] [job.round_contrib_points ? "RCP: +[job.round_contr
 			for(var/key in cf_list)
 				if(cf_list[key] == /datum/charflaw/noflaw)
 					cf_list.Remove(key)
-					break
+				else
+					var/datum/charflaw/cf = cf_list[key]
+					cf = new cf()
+					if(length(cf.restricted_species) && (pref_species.type in cf.restricted_species))
+						cf_list.Remove(key)
 
 			for(var/datum/charflaw/cf in charflaws)
 				for(var/key in cf_list)
@@ -1658,6 +1707,25 @@ Slots: [job.spawn_positions] [job.round_contrib_points ? "RCP: +[job.round_contr
 	else if(href_list["preference"] == "descriptors")
 		show_descriptors_ui(user)
 		return
+	//OV edit
+	else if(href_list["preference"] == "pref_badges")
+		if(!badge_gng)
+			badge_gng = "No"
+		if(!badge_vore)
+			badge_vore = "Unset"
+		if(!badge_willing)
+			badge_willing = "Unset"
+		if(!badge_sexuality)
+			badge_sexuality = "Unset"
+		if(!badge_erp)
+			badge_erp = "No" 
+		if(!badge_lean)
+			badge_lean = "Unset"
+		if(!badge_type)
+			badge_type = "Unset"
+		show_pref_badge_ui(user)
+		return
+	//OV edit end
 
 	else if(href_list["preference"] == "lore_primer")
 		LorePopup(user)
@@ -1765,6 +1833,12 @@ Slots: [job.spawn_positions] [job.round_contrib_points ? "RCP: +[job.round_contr
 			handle_descriptors_topic(user, href_list)
 			show_descriptors_ui(user)
 			return
+		//OV edit
+		if("change_pref_badge")
+			handle_pref_badge_topic(user, href_list)
+			show_pref_badge_ui(user)
+			return
+		//OV edit end
 		if("change_culinary_preferences")
 			handle_culinary_topic(user, href_list)
 			show_culinary_ui(user)
@@ -2692,6 +2766,19 @@ Slots: [job.spawn_positions] [job.round_contrib_points ? "RCP: +[job.round_contr
 					var/choice = tgui_input_list(user, "Who do you loathe?", "AVERSION", GLOB.averse_factions)
 					if(choice)
 						averse_chosen_faction = choice
+				
+				//OV edit
+				if("charflaw_cursed_animal_choice")
+					var/choice = tgui_input_list(user, "Which animal are you cursed to be? NOTE: All animals have the same stats, this is a cosmetic choice.", "DENDOR TOUCHED", GLOB.dendor_touched_animals)
+					if(choice)
+						cursed_animal = choice
+				
+				if("charflaw_cursed_animal_colour")
+					var/new_animal_colour = color_pick_sanitized(user, "Choose your character's cursed animal form color. NOTE: We recommend using light shades for colours as they add ontop of existing sprite colours.", "Character Preference","[cursed_animal_colour]")
+					if(new_animal_colour)
+						new_animal_colour = sanitize_hexcolor(new_animal_colour)
+						cursed_animal_colour = "#[new_animal_colour]"
+				//OV edit end
 
 				if("race_bonus_select")
 					if(length(pref_species.custom_selection))

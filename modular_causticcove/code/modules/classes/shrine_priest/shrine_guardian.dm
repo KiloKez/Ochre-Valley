@@ -2,7 +2,7 @@
 	name = "Shrine Guardian"
 	tutorial = "You were once a guardian of your shrine in Kazengun. Something has forced you out, if it be maurauding ronin, or too many beasts for you to handle. You are skilled in polearms and bows, using an awkward battle style for hit and run tactics."
 	allowed_sexes = list(MALE, FEMALE)
-	allowed_races = NON_DWARVEN_RACE_TYPES //no dwarf sprites
+	forbidden_races = list(RACES_SMALL) //no dwarf sprites
 	allowed_patrons = ALL_KAZENGUN_PATRONS //guardian of the twelve... and saidon but no undivided
 	outfit = /datum/outfit/job/roguetown/mercenary/shrine_guardian
 	subclass_languages = list(/datum/language/kazengunese)
@@ -10,12 +10,14 @@
 	category_tags = list(CTAG_MERCENARY)
 	traits_applied = list(TRAIT_STEELHEARTED, TRAIT_CRITICAL_RESISTANCE)
 	cmode_music = 'sound/music/combat_kazengite.ogg'
+	//OV edit
 	subclass_stats = list(
-		STATKEY_WIL = 3,
+		STATKEY_WIL = 2,
 		STATKEY_STR = 1,
-		STATKEY_SPD = 3,
-		STATKEY_PER = 2
+		STATKEY_SPD = 2,
+		STATKEY_PER = 1
 	)
+	//OV edit end
 	subclass_skills = list(
 		/datum/skill/magic/holy = SKILL_LEVEL_NOVICE,
 		/datum/skill/combat/polearms = SKILL_LEVEL_JOURNEYMAN,

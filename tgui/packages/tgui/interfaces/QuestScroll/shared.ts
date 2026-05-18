@@ -32,6 +32,7 @@ export type QuestScrollData = {
   recovery_shipment?: string | null;
   reward?: number;
   levy_rate?: number;
+  guild_cut_rate?: number;
   progress_required?: number;
   progress_current?: number;
   compass_direction?: string;
@@ -46,6 +47,8 @@ export type QuestScrollData = {
   blockade_total_waves?: number;
   blockade_armed?: BooleanLike;
   blockade_failed?: BooleanLike;
+  hunt_timer_label?: string;
+  hunt_timer_seconds?: number;
 };
 
 export const FACTION_CAT_HUMANOID = 'humanoid';

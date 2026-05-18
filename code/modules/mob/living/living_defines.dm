@@ -12,6 +12,8 @@
 	var/lastattacker = null
 	var/lastattackerckey = null
 	var/datum/weakref/lastattacker_weakref = null
+	/// Blood Toll bucket key (STATS_KILLED_*); set on NPC subtypes that should tally on death. See code/__HELPERS/blood_toll.dm
+	var/blood_toll_bucket = null
 
 	//Health and life related vars
 	var/maxHealth = 100 //Maximum health that should be possible.
@@ -231,3 +233,6 @@
 	var/max_breath = 100
 	var/last_breath_spent = 0
 	var/client/swimming_filter_client = null
+
+	/// This one's for when you're choking to death.
+	var/last_gasp

@@ -745,6 +745,8 @@ SAVEFILE UPDATING/VERSIONING - 'Simplified', or rather, more coder-friendly ~Car
 	S["rumour"]			>> rumour
 	S["noble_gossip"]			>> noble_gossip
 	S["averse_chosen_faction"] >> averse_chosen_faction
+	S["cursed_animal"] >> cursed_animal //OV ADD
+	S["cursed_animal_colour"] >> cursed_animal_colour //OV ADD
 	S["song_artist"]		>> song_artist
 	S["song_title"]			>> song_title
 	S["nsfwflavortext"]	>> nsfwflavortext
@@ -763,6 +765,14 @@ SAVEFILE UPDATING/VERSIONING - 'Simplified', or rather, more coder-friendly ~Car
 	S["directory_sexualitytag"] >> directory_sexualitytag
 	S["directory_pvp"] >> directory_pvp
 	S["directory_ad"] >> directory_ad
+
+	S["badge_gng"] >> badge_gng
+	S["badge_vore"] >> badge_vore
+	S["badge_willing"] >> badge_willing
+	S["badge_sexuality"] >> badge_sexuality
+	S["badge_erp"] >> badge_erp
+	S["badge_lean"] >> badge_lean
+	S["badge_type"] >> badge_type
 	//OV edit end
 
 	S["img_gallery"]	>> img_gallery
@@ -960,7 +970,16 @@ SAVEFILE UPDATING/VERSIONING - 'Simplified', or rather, more coder-friendly ~Car
 	WRITE_FILE(S["selected_patron"]		, selected_patron.type)
 
 	// Organs
+	var/list/packed_hair = list()
+	for(var/datum/customizer_entry/entry as anything in customizer_entries)
+		if(!istype(entry, /datum/customizer_entry/hair))
+			continue
+		var/datum/customizer_entry/hair/hair_entry = entry
+		packed_hair += hair_entry
+		hair_pack(hair_entry)
 	WRITE_FILE(S["customizer_entries"] , customizer_entries)
+	for(var/datum/customizer_entry/hair/hair_entry as anything in packed_hair)
+		hair_unpack(hair_entry)
 	// Body markings
 	WRITE_FILE(S["body_markings"] , body_markings)
 	// Descriptor entries
@@ -989,6 +1008,8 @@ SAVEFILE UPDATING/VERSIONING - 'Simplified', or rather, more coder-friendly ~Car
 	WRITE_FILE(S["rumour"] , html_decode(rumour))
 	WRITE_FILE(S["noble_gossip"] , html_decode(noble_gossip))
 	WRITE_FILE(S["averse_chosen_faction"] , html_decode(averse_chosen_faction))
+	WRITE_FILE(S["cursed_animal"] , html_decode(cursed_animal)) //OV ADD
+	WRITE_FILE(S["cursed_animal_colour"] , html_decode(cursed_animal_colour)) //OV ADD
 	WRITE_FILE(S["song_artist"] , song_artist)
 	WRITE_FILE(S["song_title"] , song_title)
 	WRITE_FILE(S["examine_theme"] , examine_theme)
@@ -1018,6 +1039,14 @@ SAVEFILE UPDATING/VERSIONING - 'Simplified', or rather, more coder-friendly ~Car
 	WRITE_FILE(S["directory_sexualitytag"] , directory_sexualitytag)
 	WRITE_FILE(S["directory_pvp"] , directory_pvp) //OV ADD
 	WRITE_FILE(S["directory_ad"] , directory_ad)
+
+	WRITE_FILE(S["badge_gng"] , badge_gng)
+	WRITE_FILE(S["badge_vore"] , badge_vore)
+	WRITE_FILE(S["badge_willing"] , badge_willing)
+	WRITE_FILE(S["badge_sexuality"] , badge_sexuality)
+	WRITE_FILE(S["badge_erp"] , badge_erp)
+	WRITE_FILE(S["badge_lean"] , badge_lean)
+	WRITE_FILE(S["badge_type"] , badge_type)
 	//OV edit end
 
 	WRITE_FILE(S["gear_list"], gear_list)
