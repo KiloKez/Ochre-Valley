@@ -1,7 +1,7 @@
 //Saves the sunstrike from deletion for an admin smite
 
 /obj/effect/temp_visual/firewave/sun_mark
-	icon = 'icons/effects/160x160.dmi'
+	icon = 'modular_ochrevalley/icons/effects/160x160.dmi'
 	icon_state = "sun"
 	alpha = 5
 	duration = 1 MINUTES
@@ -9,6 +9,10 @@
 	pixel_y = -64
 	light_outer_range = 5
 	light_color = "#ffb300ff"
+
+/obj/effect/temp_visual/firewave/sun_mark/Initialize(mapload)
+	. = ..()
+	SpinAnimation(20)
 
 /obj/effect/temp_visual/firewave/sun_mark/pre_sunstrike
 	duration = 30 SECONDS
