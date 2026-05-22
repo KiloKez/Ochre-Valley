@@ -95,7 +95,6 @@
 		var/target_job = SSrole_class_handler.get_advclass_by_name(M.advjob)
 		if(target_job)
 			SSrole_class_handler.adjust_class_amount(target_job, -1)
-	if(M.mind)
 		M.mind.unknow_all_people()
 		for(var/datum/mind/MF in get_minds())
 			M.mind.become_unknown_to(MF)
