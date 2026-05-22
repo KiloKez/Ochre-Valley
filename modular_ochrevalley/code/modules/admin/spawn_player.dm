@@ -88,14 +88,13 @@
 	
 //Why did this not already exist? Removes a mob from the round, freeing up job slot, effectively far travel
 /proc/safe_round_remove(mob/M, announce = FALSE)
-	var/datum/job/mob_job
 	if(M.mind)
-		mob_job = SSjob.GetJob(M.mind.assigned_role)
+		var/datum/job/mob_job = SSjob.GetJob(M.mind.assigned_role)
 		if(mob_job)
 			mob_job.current_positions = max(0, mob_job.current_positions - 1)
-			var/target_job = SSrole_class_handler.get_advclass_by_name(M.advjob)
-			if(target_job)
-				SSrole_class_handler.adjust_class_amount(target_job, -1)
+		var/target_job = SSrole_class_handler.get_advclass_by_name(M.advjob)
+		if(target_job)
+			SSrole_class_handler.adjust_class_amount(target_job, -1)
 	if(M.mind)
 		M.mind.unknow_all_people()
 		for(var/datum/mind/MF in get_minds())
