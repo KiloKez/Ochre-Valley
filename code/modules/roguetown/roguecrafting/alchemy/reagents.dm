@@ -289,6 +289,33 @@
 	M.apply_status_effect(/datum/status_effect/buff/alch/fortunepot)
 	return ..()
 
+/datum/reagent/buff/shrink
+	name = "Shrinking Potion"
+	color = "#00b7ff"
+	taste_description = "butterscotch"
+	scent_description = "turkey dinner"
+	metabolization_rate = REAGENTS_METABOLISM * 0.05
+
+/datum/reagent/buff/shrink/on_mob_life(mob/living/carbon/M)
+	var/mob/living/target_live = M
+
+	// Set Scale
+	target_scale = min(target_live.size_multiplier - 30, 20)
+	if(target_scale == target_live.size_multiplier)
+		return ..() // Already as small as they can be!
+
+	// Messages
+	user.visible_message(span_notice("[user] rapidly changes in size!"), span_notice("I rapidly shrink down!"))
+
+	// Do rescaling
+	var/datum/status_effect/buff/sizechanged/size_status = target_live.apply_status_effect(/datum/status_effect/buff/sizechanged)
+	if(istype(size_status))
+		size_status.original_scale = target_live.size_multiplier
+	
+	target_live.resize(target_scale)
+
+	return ..()
+
 //Poisons
 /* Tested this quite a bit. Heres the deal. Metabolism REAGENTS_SLOW_METABOLISM is 0.1 and needs to be that so poison isnt too fast working but
 still is dangerous. Toxloss of 3 at metabolism 0.1 puts you in dying early stage then stops for reference of these values.

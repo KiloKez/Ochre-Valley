@@ -82,6 +82,7 @@
 		/obj/item/recipe_book/alchemy = 1,
 		/obj/item/clothing/mask/rogue/physician = 1,
 		/obj/item/mini_flagpole/apothecary = 1,
+		/obj/item/reagent_containers/glass/bottle/alchemical/shrinkpot = 1,
 	)
 	if(H.mind)
 		H.mind.AddSpell(new /obj/effect/proc_holder/spell/invoked/diagnose/secular)

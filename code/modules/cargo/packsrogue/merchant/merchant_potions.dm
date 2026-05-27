@@ -76,6 +76,11 @@
 	cost = 50
 	contains = list(/obj/item/reagent_containers/glass/bottle/alchemical/lucpot)
 
+/datum/supply_pack/rogue/potions/shrinkpot
+	name = "Shrink Potion"
+	cost = 50
+	contains = list(/obj/item/reagent_containers/glass/bottle/alchemical/shrinkpot)
+
 // This is really fucking stupid but it's actually for the SILVERFACE.
 // Bottlebombs are made by the apothecary, NOT the blacksmith, who can otherwise lock
 // you out of buying these.

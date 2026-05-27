@@ -44,6 +44,11 @@
 	skill_required = SKILL_LEVEL_JOURNEYMAN // If it has "Strong", lock it roundstart for Apothecary or above
 	output_reagents = list(/datum/reagent/medicine/stronghealth = 90)
 
+/datum/alch_cauldron_recipe/shrink_potion
+	name = "Shrinking Potion"
+	smells_like = "mice"
+	output_reagents = list(/datum/reagent/buff/shrink = 90)
+
 /datum/alch_cauldron_recipe/mana_potion
 	name = "Elixir of Mana"
 	smells_like = "power"
