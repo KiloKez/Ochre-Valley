@@ -78,6 +78,9 @@
 /obj/item/reagent_containers/glass/bottle/alchemical/shrinkpot
 	list_reagents = list(/datum/reagent/buff/shrink = 60)
 
+/obj/item/reagent_containers/glass/bottle/alchemical/growpot
+	list_reagents = list(/datum/reagent/buff/grow = 60)
+
 /obj/item/reagent_containers/glass/bottle/alchemical/healthpot
 	list_reagents = list(/datum/reagent/medicine/healthpot = 30)
 

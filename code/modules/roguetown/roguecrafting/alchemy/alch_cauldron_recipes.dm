@@ -49,6 +49,11 @@
 	smells_like = "mice"
 	output_reagents = list(/datum/reagent/buff/shrink = 90)
 
+/datum/alch_cauldron_recipe/growth_potion
+	name = "Growth Potion"
+	smells_like = "mammoth"
+	output_reagents = list(/datum/reagent/buff/grow = 90)
+
 /datum/alch_cauldron_recipe/mana_potion
 	name = "Elixir of Mana"
 	smells_like = "power"

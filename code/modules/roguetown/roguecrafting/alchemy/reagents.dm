@@ -301,12 +301,41 @@
 	if(target_live.size_multiplier == RESIZE_MINIMUM)
 		return ..() // Already as small as you can be!
 
-	// Set Scale.  Should be between 0.2 (RESIZE_MIN) and 2.5 (RESIZE_MAX); 1.0 is normal
+	// Set Scale.  Should be between 0.2 (RESIZE_MINIMUN) and 2.5 (RESIZE_MAXIMUM); 1.0 is normal
 	var diff_min_to_norm = (1 - RESIZE_MINIMUM)
 	var target_scale = max(target_live.size_multiplier - (diff_min_to_norm/3), RESIZE_MINIMUM)
 
 	// Messages
 	M.visible_message(span_notice("[M] rapidly changes in size!"), span_notice("I rapidly shrink down!"))
+
+	// Do rescaling
+	// Uses the sizechanged status effect from shrink.dm
+	var/datum/status_effect/buff/sizechanged/size_status = target_live.apply_status_effect(/datum/status_effect/buff/sizechanged)
+	if(istype(size_status))
+		size_status.original_scale = target_live.size_multiplier
+	
+	target_live.resize(target_scale)
+
+	return ..()
+
+/datum/reagent/buff/grow
+	name = "Growth Potion"
+	color = "#ae00ff"
+	taste_description = "sugar cookies"
+	scent_description = "vanilla cake"
+	metabolization_rate = REAGENTS_METABOLISM * 0.05
+
+/datum/reagent/buff/grow/reaction_mob(mob/living/carbon/M)
+	var/mob/living/target_live = M
+	if(target_live.size_multiplier == RESIZE_MAXIMUM)
+		return ..() // Already as small as you can be!
+
+	// Set Scale.  Should be between 0.2 (RESIZE_MINIMUM) and 2.5 (RESIZE_MAXIMUM); 1.0 is normal
+	var diff_max_to_norm = (RESIZE_MAXIMUM - 1)
+	var target_scale = min(target_live.size_multiplier + (diff_max_to_norm/3), RESIZE_MAXIMUM)
+
+	// Messages
+	M.visible_message(span_notice("[M] rapidly changes in size!"), span_notice("I rapidly grow taller!"))
 
 	// Do rescaling
 	// Uses the sizechanged status effect from shrink.dm
