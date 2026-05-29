@@ -1004,6 +1004,8 @@ GLOBAL_LIST_EMPTY(roundstart_races)
 
 		var/obj/item/organ/breasts/breasts = H.has_breasts()
 		if(breasts)
+			// Kez - TODO: Add flavor/color of prey to the resulting milk
+			// Also, use generateMilk() instead of adjusting milk_stored
 			if(H.nutrition > NUTRITION_LEVEL_HUNGRY && breasts.lactating && breasts.milk_max > breasts.milk_stored) //Vrell - numbers may need to be tweaked for balance but hey this works for now.
 				var/milk_to_make = min(hunger_rate, breasts.milk_max - breasts.milk_stored)
 				breasts.milk_stored += milk_to_make

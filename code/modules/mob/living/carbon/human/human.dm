@@ -1151,3 +1151,31 @@
 ///This is used to allow the thrown item "deflect". Minor and mostly just for aurafarming. Hooks into do_attack_animation because it's the most reliable access to a "valid" attack.
 /mob/living/carbon/human/proc/update_proj_parry_timer()
 	projectile_parry_timer = (world.time + PROJ_PARRY_TIMER)
+
+
+/mob/living/carbon/human/attackby(obj/item/I, mob/user, params)
+	visible_message("Attemping to attack a human!")
+
+	// Milk the breasts!
+	if(user.used_intent.type == /datum/intent/fill)
+		visible_message("Attemping to attack (fill) a human!")
+		if(istype(I, /obj/item/reagent_containers/glass))
+			visible_message("Attemping to attack a human with a reagant glass!")
+			var/obj/item/organ/breasts/mybreasts = has_breasts()
+			if(mybreasts)
+				visible_message("Attemping to attack a human, with breasts, with a reagant glass!")
+				if(mybreasts.lactating)
+					visible_message("Attemping to attack a lactating human")
+					// Get some milk!
+					mybreasts.milk(I, user)
+					return 1
+	else:
+		return ..()
+
+/mob/living/carbon/human/Life()
+	. = ..()
+	// TODO this seems to make the game hitch, refactor or remove
+	var/obj/item/organ/breasts/mybreasts = has_breasts()
+	if(mybreasts)
+		if(mybreasts.lactating)
+			mybreasts.generateMilk()
